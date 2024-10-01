@@ -50,6 +50,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - DisplayAny: 显示任何输入的字符串表示 [详细说明](docs/miscellaneous.md#displayany)
   - PrimitiveText: 创建一个基本的文本字符串 [详细说明](docs/miscellaneous.md#primitivetext)
   - FillMaskedImageArea: 使用指定的填充值填充图像中被遮罩覆盖的区域 [详细说明](docs/miscellaneous.md#fillmaskedimagearea)
+  - Seed: 生成种子值 [详细说明](docs/miscellaneous.md#seed)
 
 ## 安装
 

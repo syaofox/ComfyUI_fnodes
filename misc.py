@@ -90,14 +90,31 @@ class FillMaskedImageArea:
         return (image,)
 
 
+class Seed:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {'required': {'seed': ('INT', {'default': 0, 'min': 0, 'max': 0xFFFFFFFFFFFFFFFF})}}
+
+    RETURN_TYPES = ('FLOAT', 'INT')
+    RETURN_NAMES = ('seed_float', 'seed_int')
+    FUNCTION = 'execute'
+
+    CATEGORY = _CATEGORY
+
+    def execute(self, seed):
+        return (float(seed), int(seed))
+
+
 MISC_CLASS_MAPPINGS = {
     'DisplayAny-': DisplayAny,
     'PrimitiveText-': PrimitiveText,
     'FillMaskedImageArea-': FillMaskedImageArea,
+    'Seed-': Seed,
 }
 
 MISC_NAME_MAPPINGS = {
     'DisplayAny-': 'Display Any',
     'PrimitiveText-': 'Primitive Text',
     'FillMaskedImageArea-': 'Fill Masked Image Area',
+    'Seed-': 'Seed',
 }
