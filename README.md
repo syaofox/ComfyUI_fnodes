@@ -33,16 +33,23 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - OutlineMask: 给遮罩添加轮廓线 [详细说明](docs/mask_tools.md#outlinemask)
   - CreateBlurredEdgeMask: 根据指定图片创建模糊遮罩 [详细说明](docs/mask_tools.md#createblurrededgemask)
 
-- 杂项工具:
-  - DisplayAny: 显示任何输入的字符串表示 [详细说明](docs/miscellaneous.md#displayany)
-  - PrimitiveText: 创建一个基本的文本字符串 [详细说明](docs/miscellaneous.md#primitivetext)
-  - FillMaskedImageArea: 使用指定的填充值填充图像中被遮罩覆盖的区域 [详细说明](docs/miscellaneous.md#fillmaskedimagearea)
 
 - 人脸分析工具:
   - GeneratePreciseFaceMask: 生成精确的人脸遮罩 [详细说明](docs/face_analysis.md#generateprecisefacemask)
   - AlignImageByFace: 根据图像中的人脸进行旋转对齐 [详细说明](docs/face_analysis.md#alignimagebyface)
   - FaceCutout: 切下人脸并进行缩放 [详细说明](docs/face_analysis.md#facecutout)
   - FacePaste: 将人脸图像贴回原图 [详细说明](docs/face_analysis.md#facepaste)
+
+- 采样器工具:
+  - ScheduleSamplerCustomTurbo: 自定义涡轮采样器,支持多次降噪 [详细说明](docs/schedule_samplers.md#schedulesamplercustomturbo)
+  - ScheduleSamplerCustomAYS: 自定义AYS采样器,支持多次降噪和不同模型类型 [详细说明](docs/schedule_samplers.md#schedulesamplercustomays)
+  - ScheduleSampler: 通用调度采样器,支持多次降噪 [详细说明](docs/schedule_samplers.md#schedulesampler)
+
+
+- 杂项工具:
+  - DisplayAny: 显示任何输入的字符串表示 [详细说明](docs/miscellaneous.md#displayany)
+  - PrimitiveText: 创建一个基本的文本字符串 [详细说明](docs/miscellaneous.md#primitivetext)
+  - FillMaskedImageArea: 使用指定的填充值填充图像中被遮罩覆盖的区域 [详细说明](docs/miscellaneous.md#fillmaskedimagearea)
 
 ## 安装
 
