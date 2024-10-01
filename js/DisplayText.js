@@ -26,7 +26,7 @@ app.registerExtension({
 
         };
 
-        if (nodeData.name === "ImageScalerForSDModels-" || nodeData.name === "GetImageSize-" || nodeData.name === "ImageScaleBySpecifiedSide-") {
+        if (nodeData.name === "ImageScalerForSDModels-" || nodeData.name === "GetImageSize-" || nodeData.name === "ImageScaleBySpecifiedSide-" || nodeData.name === "ComputeImageScaleRatio-") {
             const onExecuted = nodeType.prototype.onExecuted;
 
             nodeType.prototype.onExecuted = function (message) {
@@ -42,6 +42,9 @@ app.registerExtension({
                 textWidget.value = message["width"].join("") + "x" + message["height"].join("");
                 if (nodeData.name === "GetImageSize-") {
                     textWidget.value += "x" + message["count"].join("");
+                }
+                if (nodeData.name === "ComputeImageScaleRatio-") {
+                    textWidget.value += "x" + message["rescale_ratio"].join("");
                 }
             };
 

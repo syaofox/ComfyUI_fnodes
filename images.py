@@ -7,6 +7,7 @@ from .utils.mask_utils import solid_mask
 from .utils.utils import make_even
 
 _CATEGORY = 'fnodes/images'
+UPSCALE_METHODS = ['lanczos', 'nearest-exact', 'bilinear', 'area', 'bicubic']
 
 
 class GetImageSize:
@@ -52,7 +53,7 @@ class BaseImageScaler:
         return {
             'required': {
                 'image': ('IMAGE',),
-                'upscale_method': (['lanczos', 'nearest-exact', 'bilinear', 'area', 'bicubic'],),
+                'upscale_method': (UPSCALE_METHODS,),
             },
             'optional': {
                 'mask': ('MASK',),
@@ -150,14 +151,66 @@ class ImageScaleBySpecifiedSide(BaseImageScaler):
         return self.prepare_result(scaled_image, result_mask, width, height)
 
 
+class ComputeImageScaleRatio:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'image': ('IMAGE',),
+                'target_max_size': (
+                    'INT',
+                    {'default': 1920, 'min': 0, 'step': 1, 'max': 99999},
+                ),
+            },
+        }
+
+    RETURN_TYPES = (
+        'FLOAT',
+        'INT',
+        'INT',
+    )
+    RETURN_NAMES = (
+        'rescale_ratio',
+        'width',
+        'height',
+    )
+    FUNCTION = 'execute'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '根据引用图片的大小和目标最大尺寸，返回缩放比例和缩放后的宽高'
+
+    def execute(self, image, target_max_size):
+        samples = image.movedim(-1, 1)
+        width, height = samples.shape[3], samples.shape[2]
+
+        rescale_ratio = target_max_size / max(width, height)
+
+        new_width = make_even(round(width * rescale_ratio))
+        new_height = make_even(round(height * rescale_ratio))
+
+        return {
+            'ui': {
+                'rescale_ratio': (rescale_ratio,),
+                'width': (new_width,),
+                'height': (new_height,),
+            },
+            'result': (
+                rescale_ratio,
+                new_width,
+                new_height,
+            ),
+        }
+
+
 IMAGE_CLASS_MAPPINGS = {
     'GetImageSize-': GetImageSize,
     'ImageScalerForSDModels-': ImageScalerForSDModels,
     'ImageScaleBySpecifiedSide-': ImageScaleBySpecifiedSide,
+    'ComputeImageScaleRatio-': ComputeImageScaleRatio,
 }
 
 IMAGE_NAME_MAPPINGS = {
     'GetImageSize-': 'Get Image Size',
     'ImageScalerForSDModels-': 'Image Scaler for SD Models',
     'ImageScaleBySpecifiedSide-': 'Image Scale By Specified Side',
+    'ComputeImageScaleRatio-': 'Compute Image Scale Ratio',
 }
