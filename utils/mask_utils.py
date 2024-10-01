@@ -36,20 +36,37 @@ def combine_mask(destination, source, x, y):
 
 
 def grow_mask(mask, expand, tapered_corners):
-    c = 0 if tapered_corners else 1
-    kernel = np.array([[c, 1, c], [1, 1, 1], [c, 1, c]])
-    mask = mask.reshape((-1, mask.shape[-2], mask.shape[-1]))
-    out = []
-    for m in mask:
-        output = m.numpy()
-        for _ in range(abs(expand)):
-            if expand < 0:
-                output = scipy.ndimage.grey_erosion(output, footprint=kernel)
-            else:
-                output = scipy.ndimage.grey_dilation(output, footprint=kernel)
-        output = torch.from_numpy(output)
-        out.append(output)
-    return torch.stack(out, dim=0)
+    if expand == 0:
+        return mask
+
+    device = mask.device
+    mask = mask.reshape((-1, 1, mask.shape[-2], mask.shape[-1]))  # 添加通道维度
+
+    # 创建卷积核
+    c = 0.0 if tapered_corners else 1.0
+    kernel = torch.tensor([[c, 1.0, c], [1.0, 1.0, 1.0], [c, 1.0, c]], device=device).unsqueeze(0).unsqueeze(0)
+
+    # 计算填充
+    padding = abs(expand)
+
+    if expand > 0:
+        # 膨胀操作
+        mask = torch.nn.functional.pad(mask, (padding, padding, padding, padding), mode='constant', value=0)
+        mask = torch.nn.functional.conv2d(mask, kernel, padding=1, dilation=expand)
+    else:
+        # 腐蚀操作
+        mask = 1 - mask
+        mask = torch.nn.functional.pad(mask, (padding, padding, padding, padding), mode='constant', value=1)
+        mask = torch.nn.functional.conv2d(mask, kernel, padding=1, dilation=-expand)
+        mask = 1 - mask
+
+    # 移除额外的padding
+    if padding > 0:
+        mask = mask[:, :, padding:-padding, padding:-padding]
+
+    # 将结果转回原始形状
+    output = mask.squeeze(1)
+    return torch.clamp(output, 0.0, 1.0)
 
 
 def fill_holes(mask):
