@@ -6,7 +6,7 @@ from .utils.image_convert import mask2tensor, tensor2mask
 from .utils.mask_utils import solid_mask
 from .utils.utils import make_even
 
-_CATEGORY = 'fnodes/images'
+_CATEGORY = 'fnodes/image scale'
 UPSCALE_METHODS = ['lanczos', 'nearest-exact', 'bilinear', 'area', 'bicubic']
 
 
@@ -201,14 +201,14 @@ class ComputeImageScaleRatio:
         }
 
 
-IMAGE_CLASS_MAPPINGS = {
+IMAGE_SCALE_CLASS_MAPPINGS = {
     'GetImageSize-': GetImageSize,
     'ImageScalerForSDModels-': ImageScalerForSDModels,
     'ImageScaleBySpecifiedSide-': ImageScaleBySpecifiedSide,
     'ComputeImageScaleRatio-': ComputeImageScaleRatio,
 }
 
-IMAGE_NAME_MAPPINGS = {
+IMAGE_SCALE_NAME_MAPPINGS = {
     'GetImageSize-': 'Get Image Size',
     'ImageScalerForSDModels-': 'Image Scaler for SD Models',
     'ImageScaleBySpecifiedSide-': 'Image Scale By Specified Side',
