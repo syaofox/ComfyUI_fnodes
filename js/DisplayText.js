@@ -26,7 +26,7 @@ app.registerExtension({
 
         };
 
-        if (nodeData.name === "ImageScalerForSDModels-" || nodeData.name === "GetImageSize-") {
+        if (nodeData.name === "ImageScalerForSDModels-" || nodeData.name === "GetImageSize-" || nodeData.name === "ImageScaleBySpecifiedSide-") {
             const onExecuted = nodeType.prototype.onExecuted;
 
             nodeType.prototype.onExecuted = function (message) {

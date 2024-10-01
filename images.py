@@ -4,6 +4,7 @@ from comfy.utils import common_upscale
 
 from .utils.image_convert import mask2tensor, tensor2mask
 from .utils.mask_utils import solid_mask
+from .utils.utils import make_even
 
 _CATEGORY = 'fnodes/images'
 
@@ -45,51 +46,29 @@ class GetImageSize:
         }
 
 
-class ImageScalerForSDModels:
+class BaseImageScaler:
     @classmethod
     def INPUT_TYPES(cls):
         return {
             'required': {
                 'image': ('IMAGE',),
                 'upscale_method': (['lanczos', 'nearest-exact', 'bilinear', 'area', 'bicubic'],),
-                'sd_model_type': (['sdxl', 'sd15', 'sd15+', 'sdxl+'],),
             },
             'optional': {
                 'mask': ('MASK',),
             },
         }
 
-    RETURN_TYPES = (
-        'IMAGE',
-        'MASK',
-        'INT',
-        'INT',
-        'INT',
-    )
+    RETURN_TYPES = ('IMAGE', 'MASK', 'INT', 'INT', 'INT')
     RETURN_NAMES = ('image', 'mask', 'width', 'height', 'min_dimension')
-    FUNCTION = 'execute'
     CATEGORY = _CATEGORY
-    DESCRIPTION = """
-    根据SD模型类型缩放图片到指定像素数，sd15为512x512，sd15+为512x768，sdxl为1024x1024，sdxl+为1024x1280
-    """
 
-    def execute(self, image, upscale_method, sd_model_type, mask=None):
+    def scale_image(self, image, width, height, upscale_method, mask=None):
         image_tensor = image.movedim(-1, 1)
-
-        sd_dimensions = {'sd15': (512, 512), 'sd15+': (512, 768), 'sdxl': (1024, 1024), 'sdxl+': (1024, 1280)}
-
-        target_width, target_height = sd_dimensions.get(sd_model_type, (1024, 1024))
-        total_pixels = target_width * target_height
-
-        scale_by = math.sqrt(total_pixels / (image_tensor.shape[3] * image_tensor.shape[2]))
-        width = round(image_tensor.shape[3] * scale_by)
-        height = round(image_tensor.shape[2] * scale_by)
-
         scaled_image = common_upscale(image_tensor, width, height, upscale_method, 'disabled')
         scaled_image = scaled_image.movedim(1, -1)
 
         result_mask = solid_mask(width, height)
-
         if mask is not None:
             mask_image = mask2tensor(mask)
             mask_image = mask_image.movedim(-1, 1)
@@ -97,6 +76,9 @@ class ImageScalerForSDModels:
             mask_image = mask_image.movedim(1, -1)
             result_mask = tensor2mask(mask_image)
 
+        return scaled_image, result_mask
+
+    def prepare_result(self, scaled_image, result_mask, width, height):
         return {
             'ui': {
                 'width': (width,),
@@ -112,12 +94,70 @@ class ImageScalerForSDModels:
         }
 
 
+class ImageScalerForSDModels(BaseImageScaler):
+    @classmethod
+    def INPUT_TYPES(cls):
+        base_inputs = super().INPUT_TYPES()
+        base_inputs['required']['sd_model_type'] = (['sdxl', 'sd15', 'sd15+', 'sdxl+'],)
+        return base_inputs
+
+    FUNCTION = 'execute'
+    DESCRIPTION = """
+    根据SD模型类型缩放图片到指定像素数，sd15为512x512，sd15+为512x768，sdxl为1024x1024，sdxl+为1024x1280
+    """
+
+    def execute(self, image, upscale_method, sd_model_type, mask=None):
+        sd_dimensions = {'sd15': (512, 512), 'sd15+': (512, 768), 'sdxl': (1024, 1024), 'sdxl+': (1024, 1280)}
+        target_width, target_height = sd_dimensions.get(sd_model_type, (1024, 1024))
+        total_pixels = target_width * target_height
+
+        scale_by = math.sqrt(total_pixels / (image.shape[2] * image.shape[1]))
+        width = round(image.shape[2] * scale_by)
+        height = round(image.shape[1] * scale_by)
+
+        scaled_image, result_mask = self.scale_image(image, width, height, upscale_method, mask)
+        return self.prepare_result(scaled_image, result_mask, width, height)
+
+
+class ImageScaleBySpecifiedSide(BaseImageScaler):
+    @classmethod
+    def INPUT_TYPES(cls):
+        base_inputs = super().INPUT_TYPES()
+        base_inputs['required'].update(
+            {
+                'size': ('INT', {'default': 512, 'min': 0, 'step': 1, 'max': 99999}),
+                'shorter': ('BOOLEAN', {'default': False}),
+            }
+        )
+        return base_inputs
+
+    FUNCTION = 'execute'
+    DESCRIPTION = """
+    根据指定边长缩放图片，shorter为True时参照短边，否则参照长边
+    """
+
+    def execute(self, image, size, upscale_method, shorter, mask=None):
+        if shorter:
+            reference_side_length = min(image.shape[2], image.shape[1])
+        else:
+            reference_side_length = max(image.shape[2], image.shape[1])
+
+        scale_by = reference_side_length / size
+        width = make_even(round(image.shape[2] / scale_by))
+        height = make_even(round(image.shape[1] / scale_by))
+
+        scaled_image, result_mask = self.scale_image(image, width, height, upscale_method, mask)
+        return self.prepare_result(scaled_image, result_mask, width, height)
+
+
 IMAGE_CLASS_MAPPINGS = {
-    'ImageScalerForSDModels-': ImageScalerForSDModels,
     'GetImageSize-': GetImageSize,
+    'ImageScalerForSDModels-': ImageScalerForSDModels,
+    'ImageScaleBySpecifiedSide-': ImageScaleBySpecifiedSide,
 }
 
 IMAGE_NAME_MAPPINGS = {
-    'ImageScalerForSDModels-': 'Image Scaler for SD Models',
     'GetImageSize-': 'Get Image Size',
+    'ImageScalerForSDModels-': 'Image Scaler for SD Models',
+    'ImageScaleBySpecifiedSide-': 'Image Scale By Specified Side',
 }
