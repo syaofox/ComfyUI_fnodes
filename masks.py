@@ -1,4 +1,7 @@
+import torch
 from PIL import Image, ImageFilter, ImageOps
+
+from comfy.utils import common_upscale
 
 from .utils.image_convert import np2tensor, tensor2mask
 from .utils.mask_utils import blur_mask, combine_mask, expand_mask, fill_holes, grow_mask, invert_mask
@@ -136,14 +139,58 @@ class MaskChange:
         return (mask, invert_mask(mask))
 
 
+class Depth2Mask:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'image_depth': ('IMAGE',),
+                'depth': (
+                    'FLOAT',
+                    {'default': 0.2, 'min': 0.0, 'max': 1.0, 'step': 0.01, 'round': 0.001, 'display': 'number'},
+                ),
+            },
+        }
+
+    RETURN_TYPES = ('MASK', 'MASK')
+    RETURN_NAMES = ('mask', 'mask_inverted')
+
+    FUNCTION = 'execute'
+
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '将深度图像转换为遮罩'
+
+    def execute(self, image_depth, depth):
+        def upscale(image, upscale_method, width, height):
+            samples = image.movedim(-1, 1)
+            s = common_upscale(samples, width, height, upscale_method, 'disabled')
+            s = s.movedim(1, -1)
+            return (s,)
+
+        bs, height, width = image_depth.size()[0], image_depth.size()[1], image_depth.size()[2]
+
+        mask1 = torch.zeros((bs, height, width))
+
+        image_depth = upscale(image_depth, 'lanczos', width, height)[0]
+
+        mask1 = (image_depth[..., 0] < depth).float()
+
+        return mask1, 1.0 - mask1
+
+
 MASK_CLASS_MAPPINGS = {
     'OutlineMask-': OutlineMask,
     'CreateBlurredEdgeMask-': CreateBlurredEdgeMask,
     'MaskChange-': MaskChange,
+    'Depth2Mask-': Depth2Mask,
 }
 
 MASK_NAME_MAPPINGS = {
     'OutlineMask-': 'Outline Mask',
     'CreateBlurredEdgeMask-': 'Create Blurred Edge Mask',
     'MaskChange-': 'Mask Change',
+    'Depth2Mask-': 'Depth to Mask',
 }
