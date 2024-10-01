@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from PIL import Image, ImageEnhance
 
+from comfy_extras.nodes_post_processing import Blend, Blur, Quantize
+
 _CATEGORY = 'fnodes/image processing'
 
 
@@ -175,12 +177,55 @@ class ColorTint:
         return (result,)
 
 
+class ColorBlockEffect:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'image': ('IMAGE',),
+                'strength': (
+                    'INT',
+                    {'default': 10, 'min': 1, 'max': 100, 'step': 1},
+                ),
+            },
+        }
+
+    RETURN_TYPES = ('IMAGE',)
+    FUNCTION = 'execute'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '图片色块化'
+
+    def execute(self, image: torch.Tensor, strength: int):
+        color_correct = ColorAdjustment()
+        blur = Blur()
+        quantize_node = Quantize()
+        blender = Blend()
+
+        blurred_image = blur.blur(image, blur_radius=strength, sigma=1.0)
+        blurred_image = torch.cat(blurred_image, dim=1)
+
+        quantized_image = quantize_node.quantize(blurred_image, colors=5, dither='bayer-2')
+        quantized_image = torch.cat(quantized_image, dim=1)
+
+        color_corrected_image = color_correct.execute(quantized_image, temperature=0, hue=0, brightness=5, contrast=0, saturation=-100, gamma=1)
+        color_corrected_image = torch.cat(color_corrected_image, dim=1)
+
+        blender_image = blender.blend_images(color_corrected_image, image, blend_factor=1, blend_mode='overlay')
+        blender_image = torch.cat(blender_image, dim=1)
+
+        flat_image = color_correct.execute(blender_image, temperature=0, hue=0, brightness=5, contrast=5, saturation=50, gamma=1.2)
+        flat_image = torch.cat(flat_image, dim=1)
+        return (flat_image,)
+
+
 IMAGE_PROCESSING_CLASS_MAPPINGS = {
     'ColorAdjustment-': ColorAdjustment,
     'ColorTint-': ColorTint,
+    'ColorBlockEffect-': ColorBlockEffect,
 }
 
 IMAGE_PROCESSING_NAME_MAPPINGS = {
     'ColorAdjustment-': 'Image Color Adjustment',
     'ColorTint-': 'Image Color Tint',
+    'ColorBlockEffect-': 'Image Color Block Effect',
 }
