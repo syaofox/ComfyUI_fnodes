@@ -32,7 +32,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
 - 遮罩工具:
   - OutlineMask: 给遮罩添加轮廓线 [详细说明](docs/mask_tools.md#outlinemask)
   - CreateBlurredEdgeMask: 根据指定图片创建模糊遮罩 [详细说明](docs/mask_tools.md#createblurrededgemask)
-
+  - MaskChange: 修改和处理遮罩,支持扩展、填充和模糊等操作 [详细说明](docs/mask_tools.md#maskchange)
 
 - 人脸分析工具:
   - GeneratePreciseFaceMask: 生成精确的人脸遮罩 [详细说明](docs/face_analysis.md#generateprecisefacemask)
@@ -44,7 +44,6 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - ScheduleSamplerCustomTurbo: 自定义涡轮采样器,支持多次降噪 [详细说明](docs/schedule_samplers.md#schedulesamplercustomturbo)
   - ScheduleSamplerCustomAYS: 自定义AYS采样器,支持多次降噪和不同模型类型 [详细说明](docs/schedule_samplers.md#schedulesamplercustomays)
   - ScheduleSampler: 通用调度采样器,支持多次降噪 [详细说明](docs/schedule_samplers.md#schedulesampler)
-
 
 - 杂项工具:
   - DisplayAny: 显示任何输入的字符串表示 [详细说明](docs/miscellaneous.md#displayany)

@@ -121,12 +121,12 @@ class GeneratePreciseFaceMask:
         """处理遮罩"""
         mask = np2tensor(occlusion_mask).unsqueeze(0).squeeze(-1).clamp(0, 1).to(device=img.device)
 
-        if fill:
-            mask = fill_holes(mask)
-
         grow_count = int(grow_percent * max(mask.shape)) + grow
         if grow_count > 0:
             mask = expand_mask(mask, grow_count, grow_tapered)
+
+        if fill:
+            mask = fill_holes(mask)
 
         if blur > 0:
             mask = blur_mask(mask, blur)

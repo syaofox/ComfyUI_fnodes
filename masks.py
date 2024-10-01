@@ -1,7 +1,7 @@
 from PIL import Image, ImageFilter, ImageOps
 
 from .utils.image_convert import np2tensor, tensor2mask
-from .utils.mask_utils import combine_mask, grow_mask
+from .utils.mask_utils import blur_mask, combine_mask, expand_mask, fill_holes, grow_mask, invert_mask
 
 _CATEGORY = 'fnodes/masks'
 
@@ -97,12 +97,53 @@ class CreateBlurredEdgeMask:
         return (tensor2mask(blurred_image),)
 
 
+class MaskChange:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'mask': ('MASK',),
+                'grow': ('INT', {'default': 0, 'min': -4096, 'max': 4096, 'step': 1}),
+                'grow_percent': (
+                    'FLOAT',
+                    {'default': 0.00, 'min': 0.00, 'max': 2.0, 'step': 0.01},
+                ),
+                'grow_tapered': ('BOOLEAN', {'default': False}),
+                'blur': ('INT', {'default': 0, 'min': 0, 'max': 4096, 'step': 1}),
+                'fill': ('BOOLEAN', {'default': False}),
+            },
+        }
+
+    RETURN_TYPES = ('MASK', 'MASK')
+    RETURN_NAMES = ('mask', 'inverted_mask')
+    FUNCTION = 'execute'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '修改和处理遮罩'
+
+    def execute(self, mask, grow, grow_percent, grow_tapered, blur, fill):
+        grow_count = int(grow_percent * max(mask.shape)) + grow
+        if grow_count > 0:
+            mask = expand_mask(mask, grow_count, grow_tapered)
+
+        if fill:
+            mask = fill_holes(mask)
+
+        if blur > 0:
+            mask = blur_mask(mask, blur)
+
+        # mask = mask.squeeze(0).unsqueeze(-1)
+
+        return (mask, invert_mask(mask))
+
+
 MASK_CLASS_MAPPINGS = {
     'OutlineMask-': OutlineMask,
     'CreateBlurredEdgeMask-': CreateBlurredEdgeMask,
+    'MaskChange-': MaskChange,
 }
 
 MASK_NAME_MAPPINGS = {
     'OutlineMask-': 'Outline Mask',
     'CreateBlurredEdgeMask-': 'Create Blurred Edge Mask',
+    'MaskChange-': 'Mask Change',
 }
