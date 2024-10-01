@@ -34,6 +34,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
 - 杂项工具:
   - DisplayAny: 显示任何输入的字符串表示
   - PrimitiveText: 创建一个基本的文本字符串
+  - FillMaskedImageArea: 使用指定的填充值填充图像中被遮罩覆盖的区域
 
 ## 安装
 

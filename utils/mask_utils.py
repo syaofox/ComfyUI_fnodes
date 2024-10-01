@@ -116,3 +116,17 @@ def blur_mask(mask, radius):
 
 def solid_mask(width, height, value=1):
     return torch.full((1, height, width), value, dtype=torch.float32, device='cpu')
+
+
+def mask_floor(mask, threshold: float = 0.99):
+    # 将遮罩二值化，大于等于阈值的设为1，小于阈值的设为0
+    return (mask >= threshold).to(mask.dtype)
+
+
+def mask_unsqueeze(mask):
+    # 调整遮罩的维度，确保输出的遮罩形状为 B1HW
+    if len(mask.shape) == 3:  # BHW -> B1HW
+        mask = mask.unsqueeze(1)
+    elif len(mask.shape) == 2:  # HW -> B1HW
+        mask = mask.unsqueeze(0).unsqueeze(0)
+    return mask
