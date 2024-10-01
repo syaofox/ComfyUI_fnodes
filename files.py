@@ -201,11 +201,47 @@ class RegexExtractor:
             return ('无效的正则表达式',)
 
 
+class SelectFace:
+    dir_dict = {}
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        target_dir = r'D:\aidraw\fworker\assets\face_pieces'
+        for d in Path(target_dir).iterdir():
+            if d.is_dir():
+                cls.dir_dict[d.name] = d
+
+        return {'required': {'face_name': (list(cls.dir_dict.keys()),)}}
+
+    RETURN_TYPES = (
+        'STRING',
+        'STRING',
+    )
+    RETURN_NAMES = (
+        'face_path',
+        'face_name',
+    )
+    FUNCTION = 'execute'
+
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '选择人脸'
+
+    def execute(self, face_name):
+        return (
+            str(self.dir_dict[face_name]),
+            face_name,
+        )
+
+
 FILE_CLASS_MAPPINGS = {
     'ReadImage-': ReadImage,
     'LoadImagesFromFolder-': LoadImagesFromFolder,
     'FilePathAnalyzer-': FilePathAnalyzer,
     'RegexExtractor-': RegexExtractor,
+    'SelectFace-': SelectFace,
 }
 
 FILE_NAME_MAPPINGS = {
@@ -213,4 +249,5 @@ FILE_NAME_MAPPINGS = {
     'LoadImagesFromFolder-': 'Load Images From Folder',
     'FilePathAnalyzer-': 'FilePath Analyzer',
     'RegexExtractor-': 'Regex Extractor',
+    'SelectFace-': 'Select Face',
 }
