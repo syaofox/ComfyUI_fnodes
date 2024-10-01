@@ -59,6 +59,14 @@ def np2tensor(image):
     return T.ToTensor()(image).permute(1, 2, 0)
 
 
+def np2mask(image):
+    return torch.from_numpy(image).unsqueeze(0)
+
+
+def mask2np(image):
+    return np.array(image.squeeze(0).cpu())
+
+
 def image_posterize(image, threshold):
     image = image.mean(dim=3, keepdim=True)
     image = (image > threshold).float()

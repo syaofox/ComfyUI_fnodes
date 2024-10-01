@@ -1,6 +1,6 @@
 import math
 
-from PIL import Image
+import cv2
 
 from comfy.utils import common_upscale
 
@@ -223,11 +223,34 @@ class ImageRotate:
     CATEGORY = _CATEGORY
 
     def run(self, image_from, angle, expand):
-        image_from = tensor2np(image_from[0])
-        image_from = Image.fromarray(image_from).rotate(angle, expand=expand, resample=Image.Resampling.BICUBIC)
-        image_from = np2tensor(image_from).unsqueeze(0)
+        image_np = tensor2np(image_from[0])
 
-        return (image_from,)
+        height, width = image_np.shape[:2]
+        center = (width / 2, height / 2)
+
+        if expand:
+            # 计算新图像的尺寸
+            rot_mat = cv2.getRotationMatrix2D(center, angle, 1.0)
+            abs_cos = abs(rot_mat[0, 0])
+            abs_sin = abs(rot_mat[0, 1])
+            new_width = int(height * abs_sin + width * abs_cos)
+            new_height = int(height * abs_cos + width * abs_sin)
+
+            # 调整旋转矩阵
+            rot_mat[0, 2] += (new_width / 2) - center[0]
+            rot_mat[1, 2] += (new_height / 2) - center[1]
+
+            # 执行旋转
+            rotated_image = cv2.warpAffine(image_np, rot_mat, (new_width, new_height), flags=cv2.INTER_CUBIC)
+        else:
+            # 不扩展图像尺寸的旋转
+            rot_mat = cv2.getRotationMatrix2D(center, angle, 1.0)
+            rotated_image = cv2.warpAffine(image_np, rot_mat, (width, height), flags=cv2.INTER_CUBIC)
+
+        # 转换回tensor格式
+        rotated_tensor = np2tensor(rotated_image).unsqueeze(0)
+
+        return (rotated_tensor,)
 
 
 IMAGE_SCALE_CLASS_MAPPINGS = {

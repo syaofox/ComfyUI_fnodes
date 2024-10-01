@@ -12,7 +12,7 @@ import folder_paths
 from comfy.utils import ProgressBar
 
 from .utils.downloader import download_model
-from .utils.image_convert import np2tensor, pil2mask, pil2tensor, tensor2np, tensor2pil
+from .utils.image_convert import np2tensor, pil2mask, pil2tensor, tensor2mask, tensor2np, tensor2pil
 from .utils.mask_utils import blur_mask, expand_mask, fill_holes, invert_mask
 
 _CATEGORY = 'fnodes/face_analysis'
@@ -150,8 +150,8 @@ class AlignImageByFace:
             },
         }
 
-    RETURN_TYPES = ('IMAGE', 'MASK', 'MASK', 'FLOAT', 'FLOAT')
-    RETURN_NAMES = ('aligned_image', 'mask', 'inverted_mask', 'rotation_angle', 'inverse_rotation_angle')
+    RETURN_TYPES = ('IMAGE', 'FLOAT', 'FLOAT')
+    RETURN_NAMES = ('aligned_image', 'rotation_angle', 'inverse_rotation_angle')
     FUNCTION = 'align'
     CATEGORY = _CATEGORY
     DESCRIPTION = '根据图像中的人脸进行旋转对齐'
@@ -196,21 +196,33 @@ class AlignImageByFace:
                 print(f'目标图像人脸关键点: {target_shape}')
                 rotation_angle -= calculate_angle(target_shape)
 
-        original_image = tensor2pil(image_from[0]) if not is_flipped else Image.fromarray(processed_image)
+        original_image = tensor2np(image_from[0]) if not is_flipped else processed_image
 
-        # 创建并旋转遮罩
-        mask = Image.new('L', original_image.size, 255)
-        rotated_mask = mask.rotate(rotation_angle, expand=expand, resample=Image.Resampling.BICUBIC)
-        mask_tensor = pil2mask(rotated_mask)
+        rows, cols = original_image.shape[:2]
+        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), rotation_angle, 1)
 
-        # 旋转原始图像
-        aligned_image = original_image.rotate(rotation_angle, expand=expand, resample=Image.Resampling.BICUBIC)
-        aligned_image_tensor = pil2tensor(aligned_image)
+        if expand:
+            # 计算新的边界以确保整个图像都包含在内
+            cos = np.abs(M[0, 0])
+            sin = np.abs(M[0, 1])
+            new_cols = int((rows * sin) + (cols * cos))
+            new_rows = int((rows * cos) + (cols * sin))
+            M[0, 2] += (new_cols / 2) - cols / 2
+            M[1, 2] += (new_rows / 2) - rows / 2
+            new_size = (new_cols, new_rows)
+        else:
+            new_size = (cols, rows)
+
+        aligned_image = cv2.warpAffine(original_image, M, new_size, flags=cv2.INTER_LINEAR)
+
+        # 转换为张量
+
+        aligned_image_tensor = np2tensor(aligned_image).unsqueeze(0)
 
         if is_flipped:
             rotation_angle += 180
 
-        return (aligned_image_tensor, mask_tensor, 1.0 - mask_tensor, rotation_angle, 360 - rotation_angle)
+        return (aligned_image_tensor, rotation_angle, 360 - rotation_angle)
 
 
 FACE_ANALYSIS_CLASS_MAPPINGS = {
