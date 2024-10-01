@@ -5,44 +5,44 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
 ## 功能
 
 - 文件操作工具:
-  - ReadImage: 读取指定路径图片，返回图片和图片名称
-  - LoadImagesFromFolder: 读取文件夹中的图片，返回图片列表和图片批次
-  - FilePathAnalyzer: 从文件路径中提取上层目录、文件名（不含扩展名）、扩展名和完整路径
-  - RegexExtractor: 使用正则表达式从输入字符串中提取文本
-  - SelectFace: 选择人脸
+  - ReadImage: 读取指定路径图片，返回图片和图片名称 [详细说明](docs/file_operations.md#readimage)
+  - LoadImagesFromFolder: 读取文件夹中的图片，返回图片列表和图片批次 [详细说明](docs/file_operations.md#loadimagesfromfolder)
+  - FilePathAnalyzer: 从文件路径中提取上层目录、文件名（不含扩展名）、扩展名和完整路径 [详细说明](docs/file_operations.md#filepathanalyzer)
+  - RegexExtractor: 使用正则表达式从输入字符串中提取文本 [详细说明](docs/file_operations.md#regexextractor)
+  - SelectFace: 选择人脸 [详细说明](docs/file_operations.md#selectface)
 
 - 图像缩放工具:
-  - GetImageSize: 获取图像的宽度、高度和数量
-  - ImageScalerForSDModels: 根据SD模型类型将图像缩放到指定像素数
-  - ImageScaleBySpecifiedSide: 根据指定边长缩放图片
-  - ComputeImageScaleRatio: 计算图像缩放比例和缩放后的宽高
-  - ImageRotate: 旋转图像
-  - TrimImageBorders: 去除图片黑边
+  - GetImageSize: 获取图像的宽度、高度和数量 [详细说明](docs/image_scaling.md#getimagesize)
+  - ImageScalerForSDModels: 根据SD模型类型将图像缩放到指定像素数 [详细说明](docs/image_scaling.md#imagescalerforsdmodels)
+  - ImageScaleBySpecifiedSide: 根据指定边长缩放图片 [详细说明](docs/image_scaling.md#imagescalebyspecifiedside)
+  - ComputeImageScaleRatio: 计算图像缩放比例和缩放后的宽高 [详细说明](docs/image_scaling.md#computeimagescaleratio)
+  - ImageRotate: 旋转图像 [详细说明](docs/image_scaling.md#imagerotate)
+  - TrimImageBorders: 去除图片黑边 [详细说明](docs/image_scaling.md#trimimageborders)
   
 - IPAdapter工具:
-  - IPAdapterMSTiled: 对图像进行分块处理并应用IPAdapter
-  - IPAdapterMSLayerWeights: 为IPAdapter提供精细的层权重控制
+  - IPAdapterMSTiled: 对图像进行分块处理并应用IPAdapter [详细说明](docs/ipadapter.md#ipadaptermstiledl)
+  - IPAdapterMSLayerWeights: 为IPAdapter提供精细的层权重控制 [详细说明](docs/ipadapter.md#ipadaptermslayerweights)
 
 - 图像处理工具:
-  - ColorAdjustment: 对图片进行色彩校正
-  - ColorTint: 应用图片颜色滤镜
-  - ColorBlockEffect: 实现图片色块化效果
-  - FlatteningEffect: 实现图片平面化效果
+  - ColorAdjustment: 对图片进行色彩校正 [详细说明](docs/image_processing.md#coloradjustment)
+  - ColorTint: 应用图片颜色滤镜 [详细说明](docs/image_processing.md#colortint)
+  - ColorBlockEffect: 实现图片色块化效果 [详细说明](docs/image_processing.md#colorblockeffect)
+  - FlatteningEffect: 实现图片平面化效果 [详细说明](docs/image_processing.md#flatteningeffect)
 
 - 遮罩工具:
-  - OutlineMask: 给遮罩添加轮廓线
-  - CreateBlurredEdgeMask: 根据指定图片创建模糊遮罩
+  - OutlineMask: 给遮罩添加轮廓线 [详细说明](docs/mask_tools.md#outlinemask)
+  - CreateBlurredEdgeMask: 根据指定图片创建模糊遮罩 [详细说明](docs/mask_tools.md#createblurrededgemask)
 
 - 杂项工具:
-  - DisplayAny: 显示任何输入的字符串表示
-  - PrimitiveText: 创建一个基本的文本字符串
-  - FillMaskedImageArea: 使用指定的填充值填充图像中被遮罩覆盖的区域
+  - DisplayAny: 显示任何输入的字符串表示 [详细说明](docs/miscellaneous.md#displayany)
+  - PrimitiveText: 创建一个基本的文本字符串 [详细说明](docs/miscellaneous.md#primitivetext)
+  - FillMaskedImageArea: 使用指定的填充值填充图像中被遮罩覆盖的区域 [详细说明](docs/miscellaneous.md#fillmaskedimagearea)
 
 - 人脸分析工具:
-  - GeneratePreciseFaceMask: 生成精确的人脸遮罩
-  - AlignImageByFace: 根据图像中的人脸进行旋转对齐
-  - FaceCutout: 切下人脸并进行缩放
-  - FacePaste: 将人脸图像贴回原图
+  - GeneratePreciseFaceMask: 生成精确的人脸遮罩 [详细说明](docs/face_analysis.md#generateprecisefacemask)
+  - AlignImageByFace: 根据图像中的人脸进行旋转对齐 [详细说明](docs/face_analysis.md#alignimagebyface)
+  - FaceCutout: 切下人脸并进行缩放 [详细说明](docs/face_analysis.md#facecutout)
+  - FacePaste: 将人脸图像贴回原图 [详细说明](docs/face_analysis.md#facepaste)
 
 ## 安装
 
