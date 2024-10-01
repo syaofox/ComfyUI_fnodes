@@ -26,7 +26,7 @@ app.registerExtension({
 
         };
 
-        if (nodeData.name === "ImageScalerForSDModels-" ) {
+        if (nodeData.name === "ImageScalerForSDModels-" || nodeData.name === "GetImageSize-") {
             const onExecuted = nodeType.prototype.onExecuted;
 
             nodeType.prototype.onExecuted = function (message) {
@@ -40,6 +40,9 @@ app.registerExtension({
                     textWidget.inputEl.style.backgroundColor = "transparent";
                 }
                 textWidget.value = message["width"].join("") + "x" + message["height"].join("");
+                if (nodeData.name === "GetImageSize-") {
+                    textWidget.value += "x" + message["count"].join("");
+                }
             };
 
         }

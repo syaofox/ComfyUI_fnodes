@@ -8,6 +8,43 @@ from .utils.mask_utils import solid_mask
 _CATEGORY = 'fnodes/images'
 
 
+class GetImageSize:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'image': ('IMAGE',),
+            }
+        }
+
+    RETURN_TYPES = (
+        'INT',
+        'INT',
+        'INT',
+    )
+    RETURN_NAMES = (
+        'width',
+        'height',
+        'count',
+    )
+    FUNCTION = 'execute'
+    CATEGORY = _CATEGORY
+
+    def execute(self, image):
+        return {
+            'ui': {
+                'width': (image.shape[2],),
+                'height': (image.shape[1],),
+                'count': (image.shape[0],),
+            },
+            'result': (
+                image.shape[2],
+                image.shape[1],
+                image.shape[0],
+            ),
+        }
+
+
 class ImageScalerForSDModels:
     @classmethod
     def INPUT_TYPES(cls):
@@ -77,8 +114,10 @@ class ImageScalerForSDModels:
 
 IMAGE_CLASS_MAPPINGS = {
     'ImageScalerForSDModels-': ImageScalerForSDModels,
+    'GetImageSize-': GetImageSize,
 }
 
 IMAGE_NAME_MAPPINGS = {
     'ImageScalerForSDModels-': 'Image Scaler for SD Models',
+    'GetImageSize-': 'Get Image Size',
 }
