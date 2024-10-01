@@ -36,6 +36,9 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - PrimitiveText: 创建一个基本的文本字符串
   - FillMaskedImageArea: 使用指定的填充值填充图像中被遮罩覆盖的区域
 
+- 人脸分析工具:
+  - GeneratePreciseFaceMask: 生成精确的人脸遮罩
+
 ## 安装
 
 1. 确保您已经安装了ComfyUI。
