@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 import numpy as np
@@ -76,12 +77,46 @@ class FilePathAnalyzer:
         return (parent_dir, file_stem, file_extension, full_path)
 
 
+class RegexExtractor:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'input_string': ('STRING', {'default': ''}),
+                'regex_pattern': ('STRING', {'default': ''}),
+                'group_number': ('INT', {'default': 0, 'min': 0, 'max': 100}),
+            }
+        }
+
+    RETURN_TYPES = ('STRING',)
+    RETURN_NAMES = ('extracted_text',)
+    FUNCTION = 'execute'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '使用正则表达式从输入字符串中提取文本'
+
+    def execute(self, input_string, regex_pattern, group_number):
+        try:
+            match = re.search(regex_pattern, input_string)
+            if match:
+                groups = match.groups()
+                if 0 <= group_number <= len(groups):
+                    return (match.group(group_number),)
+                else:
+                    return ('组号超出范围',)
+            else:
+                return ('未找到匹配',)
+        except re.error:
+            return ('无效的正则表达式',)
+
+
 FILE_CLASS_MAPPINGS = {
     'ReadImage-': ReadImage,
     'FilePathAnalyzer-': FilePathAnalyzer,
+    'RegexExtractor-': RegexExtractor,
 }
 
 FILE_NAME_MAPPINGS = {
     'ReadImage-': 'Read Image from Path',
     'FilePathAnalyzer-': 'FilePath Analyzer',
+    'RegexExtractor-': 'Regex Extractor',
 }
