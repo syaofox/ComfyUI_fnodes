@@ -1,6 +1,7 @@
 import math
 
 import cv2
+from PIL import Image
 
 from comfy.utils import common_upscale
 
@@ -253,12 +254,48 @@ class ImageRotate:
         return (rotated_tensor,)
 
 
+class TrimImageBorders:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'image': ('IMAGE',),
+                'threshold': (
+                    'INT',
+                    {'default': 10, 'min': 0, 'max': 14096, 'step': 1},
+                ),
+            },
+        }
+
+    RETURN_TYPES = ('IMAGE',)
+    FUNCTION = 'run'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '图片去黑边'
+
+    def run(self, image, threshold):
+        img = tensor2np(image[0])
+        img = Image.fromarray(img)
+        gray_image = img.convert('L')
+
+        binary_image = gray_image.point(lambda x: 255 if x > threshold else 0)
+        bbox = binary_image.getbbox()
+
+        if bbox:
+            cropped_image = img.crop(bbox)
+        else:
+            cropped_image = img
+
+        cropped_image = np2tensor(cropped_image).unsqueeze(0)
+        return (cropped_image,)
+
+
 IMAGE_SCALE_CLASS_MAPPINGS = {
     'GetImageSize-': GetImageSize,
     'ImageScalerForSDModels-': ImageScalerForSDModels,
     'ImageScaleBySpecifiedSide-': ImageScaleBySpecifiedSide,
     'ComputeImageScaleRatio-': ComputeImageScaleRatio,
     'ImageRotate-': ImageRotate,
+    'TrimImageBorders-': TrimImageBorders,
 }
 
 IMAGE_SCALE_NAME_MAPPINGS = {
@@ -267,4 +304,5 @@ IMAGE_SCALE_NAME_MAPPINGS = {
     'ImageScaleBySpecifiedSide-': 'Image Scale By Specified Side',
     'ComputeImageScaleRatio-': 'Compute Image Scale Ratio',
     'ImageRotate-': 'Image Rotate',
+    'TrimImageBorders-': 'Trim Image Borders',
 }

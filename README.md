@@ -17,6 +17,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - ImageScaleBySpecifiedSide: 根据指定边长缩放图片
   - ComputeImageScaleRatio: 计算图像缩放比例和缩放后的宽高
   - ImageRotate: 旋转图像
+  - TrimImageBorders: 去除图片黑边
   
 - IPAdapter工具:
   - IPAdapterMSTiled: 对图像进行分块处理并应用IPAdapter
