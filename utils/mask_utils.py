@@ -112,3 +112,7 @@ def expand_mask(mask, expand, tapered_corners):
 def blur_mask(mask, radius):
     pil_image = tensor2pil(mask)
     return pil2tensor(pil_image.filter(ImageFilter.GaussianBlur(radius)))
+
+
+def solid_mask(width, height, value=1):
+    return torch.full((1, height, width), value, dtype=torch.float32, device='cpu')

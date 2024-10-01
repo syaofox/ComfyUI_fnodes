@@ -25,6 +25,24 @@ app.registerExtension({
             };
 
         };
+
+        if (nodeData.name === "ImageScalerForSDModels-" ) {
+            const onExecuted = nodeType.prototype.onExecuted;
+
+            nodeType.prototype.onExecuted = function (message) {
+                onExecuted?.apply(this, arguments);
+
+                let textWidget = this.widgets && this.widgets.find(w => w.name === "return_text");
+                if (!textWidget) {
+                    textWidget = ComfyWidgets["STRING"](this, "return_text", ["STRING", { multiline: true }], app).widget;
+                    textWidget.inputEl.readOnly = true;
+                    textWidget.inputEl.style.border = "none";
+                    textWidget.inputEl.style.backgroundColor = "transparent";
+                }
+                textWidget.value = message["width"].join("") + "x" + message["height"].join("");
+            };
+
+        }
                 
     },
 });
