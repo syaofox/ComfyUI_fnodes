@@ -4,16 +4,36 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
 
 ## 功能
 
-- 掩码处理工具:
-  - 组合掩码
-  - 扩展/收缩掩码
-  - 填充掩码中的孔洞
-  - 反转掩码
-  - 模糊掩码
+- 文件操作工具:
+  - ReadImage: 读取指定路径图片，返回图片和图片名称
+  - LoadImagesFromFolder: 读取文件夹中的图片，返回图片列表和图片批次
+  - FilePathAnalyzer: 从文件路径中提取上层目录、文件名（不含扩展名）、扩展名和完整路径
+  - RegexExtractor: 使用正则表达式从输入字符串中提取文本
+  - SelectFace: 选择人脸
 
-- 图像处理工具
-- IP-Adapter相关功能
-- 其他杂项功能
+- 图像缩放工具:
+  - GetImageSize: 获取图像的宽度、高度和数量
+  - ImageScalerForSDModels: 根据SD模型类型将图像缩放到指定像素数
+  - ImageScaleBySpecifiedSide: 根据指定边长缩放图片
+  - ComputeImageScaleRatio: 计算图像缩放比例和缩放后的宽高
+
+- IPAdapter工具:
+  - IPAdapterMSTiled: 对图像进行分块处理并应用IPAdapter
+  - IPAdapterMSLayerWeights: 为IPAdapter提供精细的层权重控制
+
+- 图像处理工具:
+  - ColorAdjustment: 对图片进行色彩校正
+  - ColorTint: 应用图片颜色滤镜
+  - ColorBlockEffect: 实现图片色块化效果
+  - FlatteningEffect: 实现图片平面化效果
+
+- 遮罩工具:
+  - OutlineMask: 给遮罩添加轮廓线
+  - CreateBlurredEdgeMask: 根据指定图片创建模糊遮罩
+
+- 杂项工具:
+  - DisplayAny: 显示任何输入的字符串表示
+  - PrimitiveText: 创建一个基本的文本字符串
 
 ## 安装
 
