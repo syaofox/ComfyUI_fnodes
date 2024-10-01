@@ -1,5 +1,4 @@
-# from custom_nodes.ComfyUI_FaceAnalysis.dlib import dlib
-
+import math
 from pathlib import Path
 
 import cv2
@@ -9,7 +8,7 @@ import torch
 from PIL import Image
 
 import folder_paths
-from comfy.utils import ProgressBar
+from comfy.utils import ProgressBar, common_upscale
 
 from .utils.downloader import download_model
 from .utils.image_convert import np2tensor, pil2mask, pil2tensor, tensor2mask, tensor2np, tensor2pil
@@ -225,12 +224,91 @@ class AlignImageByFace:
         return (aligned_image_tensor, rotation_angle, 360 - rotation_angle)
 
 
+class FaceCutout:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'analysis_models': ('ANALYSIS_MODELS',),
+                'image': ('IMAGE',),
+                'padding': ('INT', {'default': 0, 'min': 0, 'max': 4096, 'step': 1}),
+                'padding_percent': ('FLOAT', {'default': 0.1, 'min': 0.0, 'max': 2.0, 'step': 0.01}),
+                'face_index': ('INT', {'default': -1, 'min': -1, 'max': 4096, 'step': 1}),
+                'rescale_mode': (['sdxl', 'sd15', 'sdxl+', 'sd15+', 'none', 'custom'],),
+                'custom_megapixels': ('FLOAT', {'default': 1.0, 'min': 0.01, 'max': 16.0, 'step': 0.01}),
+            },
+        }
+
+    RETURN_TYPES = ('IMAGE', 'BOUNDINGINFO')
+    RETURN_NAMES = ('cutout_image', 'bounding_info')
+    FUNCTION = 'execute'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '切下人脸并进行缩放'
+
+    def execute(self, analysis_models, image, padding, padding_percent, rescale_mode, custom_megapixels, face_index=-1):
+        target_size = self._get_target_size(rescale_mode, custom_megapixels)
+
+        img = image[0]
+
+        pil_image = tensor2pil(img)
+
+        faces, x_coords, y_coords, widths, heights = analysis_models.get_bbox(pil_image, padding, padding_percent)
+
+        face_count = len(faces)
+        if face_count == 0:
+            raise Exception('未在图像中检测到人脸。')
+
+        if face_index == -1:
+            face_index = 0
+
+        face_index = min(face_index, face_count - 1)
+
+        face = faces[face_index]
+        x = x_coords[face_index]
+        y = y_coords[face_index]
+        w = widths[face_index]
+        h = heights[face_index]
+
+        scale_factor = 1
+
+        if target_size > 0:
+            scale_factor = math.sqrt(target_size / (w * h))
+            new_width = round(w * scale_factor)
+            new_height = round(h * scale_factor)
+            face = self._rescale_image(face, new_width, new_height)
+
+        bounding_info = {
+            'x': x,
+            'y': y,
+            'width': w,
+            'height': h,
+            'scale_factor': scale_factor,
+        }
+
+        return (face, bounding_info)
+
+    @staticmethod
+    def _get_target_size(rescale_mode, custom_megapixels):
+        if rescale_mode == 'custom':
+            return int(custom_megapixels * 1024 * 1024)
+        size_map = {'sd15': 512 * 512, 'sd15+': 512 * 768, 'sdxl': 1024 * 1024, 'sdxl+': 1024 * 1280, 'none': -1}
+        return size_map.get(rescale_mode, -1)
+
+    @staticmethod
+    def _rescale_image(image, width, height):
+        samples = image.movedim(-1, 1)
+        resized = common_upscale(samples, width, height, 'lanczos', 'disabled')
+        return resized.movedim(1, -1)
+
+
 FACE_ANALYSIS_CLASS_MAPPINGS = {
     'GeneratePreciseFaceMask-': GeneratePreciseFaceMask,
     'AlignImageByFace-': AlignImageByFace,
+    'FaceCutout-': FaceCutout,
 }
 
 FACE_ANALYSIS_NAME_MAPPINGS = {
     'GeneratePreciseFaceMask-': 'Generate PreciseFaceMask',
     'AlignImageByFace-': 'Align Image By Face',
+    'FaceCutout-': 'Face Cutout',
 }
