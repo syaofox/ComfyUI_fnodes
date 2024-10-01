@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import onnxruntime
 import torch
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
 
 import folder_paths
 from comfy.utils import ProgressBar, common_upscale
@@ -301,14 +301,65 @@ class FaceCutout:
         return resized.movedim(1, -1)
 
 
+class FacePaste:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'destination': ('IMAGE',),
+                'source': ('IMAGE',),
+                'bounding_info': ('BOUNDINGINFO',),
+                'margin': ('INT', {'default': 0, 'min': 0, 'max': 4096, 'step': 1}),
+                'margin_percent': ('FLOAT', {'default': 0.10, 'min': 0.0, 'max': 2.0, 'step': 0.05}),
+                'blur_radius': ('INT', {'default': 10, 'min': 0, 'max': 4096, 'step': 1}),
+            },
+        }
+
+    RETURN_TYPES = ('IMAGE', 'MASK')
+    RETURN_NAMES = ('image', 'mask')
+    FUNCTION = 'paste'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '将人脸图像贴回原图'
+
+    @staticmethod
+    def create_soft_edge_mask(size, margin, blur_radius):
+        mask = Image.new('L', size, 255)
+        draw = ImageDraw.Draw(mask)
+        draw.rectangle(((0, 0), size), outline='black', width=margin)
+        return mask.filter(ImageFilter.GaussianBlur(blur_radius))
+
+    def paste(self, destination, source, bounding_info, margin, margin_percent, blur_radius):
+        if not bounding_info:
+            return destination, None
+
+        destination = tensor2pil(destination[0])
+        source = tensor2pil(source[0])
+
+        if bounding_info.get('scale_factor', 1) != 1:
+            new_size = (bounding_info['width'], bounding_info['height'])
+            source = source.resize(new_size, resample=Image.Resampling.LANCZOS)
+
+        ref_size = max(source.width, source.height)
+        margin_border = int(ref_size * margin_percent) + margin
+
+        mask = self.create_soft_edge_mask(source.size, margin_border, blur_radius)
+
+        position = (bounding_info['x'], bounding_info['y'])
+        destination.paste(source, position, mask)
+
+        return pil2tensor(destination), pil2mask(mask)
+
+
 FACE_ANALYSIS_CLASS_MAPPINGS = {
     'GeneratePreciseFaceMask-': GeneratePreciseFaceMask,
     'AlignImageByFace-': AlignImageByFace,
     'FaceCutout-': FaceCutout,
+    'FacePaste-': FacePaste,
 }
 
 FACE_ANALYSIS_NAME_MAPPINGS = {
     'GeneratePreciseFaceMask-': 'Generate PreciseFaceMask',
     'AlignImageByFace-': 'Align Image By Face',
     'FaceCutout-': 'Face Cutout',
+    'FacePaste-': 'Face Paste',
 }

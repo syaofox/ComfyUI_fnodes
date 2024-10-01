@@ -29,7 +29,6 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - ColorBlockEffect: 实现图片色块化效果
   - FlatteningEffect: 实现图片平面化效果
 
-
 - 遮罩工具:
   - OutlineMask: 给遮罩添加轮廓线
   - CreateBlurredEdgeMask: 根据指定图片创建模糊遮罩
@@ -43,6 +42,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - GeneratePreciseFaceMask: 生成精确的人脸遮罩
   - AlignImageByFace: 根据图像中的人脸进行旋转对齐
   - FaceCutout: 切下人脸并进行缩放
+  - FacePaste: 将人脸图像贴回原图
 
 ## 安装
 
