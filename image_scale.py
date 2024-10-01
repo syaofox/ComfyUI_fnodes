@@ -1,8 +1,10 @@
 import math
 
+from PIL import Image
+
 from comfy.utils import common_upscale
 
-from .utils.image_convert import mask2tensor, tensor2mask
+from .utils.image_convert import mask2tensor, np2tensor, tensor2mask, tensor2np
 from .utils.mask_utils import solid_mask
 from .utils.utils import make_even
 
@@ -201,11 +203,39 @@ class ComputeImageScaleRatio:
         }
 
 
+class ImageRotate:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'image_from': ('IMAGE',),
+                'angle': (
+                    'FLOAT',
+                    {'default': 0.1, 'min': -14096, 'max': 14096, 'step': 0.01},
+                ),
+                'expand': ('BOOLEAN', {'default': True}),
+            },
+        }
+
+    RETURN_TYPES = ('IMAGE',)
+    RETURN_NAMES = ('rotated_image',)
+    FUNCTION = 'run'
+    CATEGORY = _CATEGORY
+
+    def run(self, image_from, angle, expand):
+        image_from = tensor2np(image_from[0])
+        image_from = Image.fromarray(image_from).rotate(angle, expand=expand, resample=Image.Resampling.BICUBIC)
+        image_from = np2tensor(image_from).unsqueeze(0)
+
+        return (image_from,)
+
+
 IMAGE_SCALE_CLASS_MAPPINGS = {
     'GetImageSize-': GetImageSize,
     'ImageScalerForSDModels-': ImageScalerForSDModels,
     'ImageScaleBySpecifiedSide-': ImageScaleBySpecifiedSide,
     'ComputeImageScaleRatio-': ComputeImageScaleRatio,
+    'ImageRotate-': ImageRotate,
 }
 
 IMAGE_SCALE_NAME_MAPPINGS = {
@@ -213,4 +243,5 @@ IMAGE_SCALE_NAME_MAPPINGS = {
     'ImageScalerForSDModels-': 'Image Scaler for SD Models',
     'ImageScaleBySpecifiedSide-': 'Image Scale By Specified Side',
     'ComputeImageScaleRatio-': 'Compute Image Scale Ratio',
+    'ImageRotate-': 'Image Rotate',
 }

@@ -2,7 +2,7 @@ import { app } from "../../scripts/app.js";
 import { ComfyWidgets } from "../../scripts/widgets.js";
 
 app.registerExtension({
-    name: "fnodes.DisplayAny-",
+    name: "fnodes.DisplayAny",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (!nodeData?.category?.startsWith("fnodes")) {
             return;

@@ -6,7 +6,6 @@ import cv2
 import numpy as np
 import onnxruntime
 import torch
-import torchvision.transforms.v2 as T
 from PIL import Image
 
 import folder_paths
@@ -214,41 +213,12 @@ class AlignImageByFace:
         return (aligned_image_tensor, mask_tensor, 1.0 - mask_tensor, rotation_angle, 360 - rotation_angle)
 
 
-class ImageRotate:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            'required': {
-                'image_from': ('IMAGE',),
-                'angle': (
-                    'FLOAT',
-                    {'default': 0.1, 'min': -14096, 'max': 14096, 'step': 0.01},
-                ),
-                'expand': ('BOOLEAN', {'default': True}),
-            },
-        }
-
-    RETURN_TYPES = ('IMAGE',)
-    RETURN_NAMES = ('rotated_image',)
-    FUNCTION = 'run'
-    CATEGORY = _CATEGORY
-
-    def run(self, image_from, angle, expand):
-        image_from = tensor2np(image_from[0])
-        image_from = Image.fromarray(image_from).rotate(angle, expand=expand, resample=Image.Resampling.BICUBIC)
-        image_from = np2tensor(image_from).unsqueeze(0)
-
-        return (image_from,)
-
-
 FACE_ANALYSIS_CLASS_MAPPINGS = {
     'GeneratePreciseFaceMask-': GeneratePreciseFaceMask,
     'AlignImageByFace-': AlignImageByFace,
-    'ImageRotate-': ImageRotate,
 }
 
 FACE_ANALYSIS_NAME_MAPPINGS = {
     'GeneratePreciseFaceMask-': 'Generate PreciseFaceMask',
     'AlignImageByFace-': 'Align Image By Face',
-    'ImageRotate-': 'Image Rotate',
 }

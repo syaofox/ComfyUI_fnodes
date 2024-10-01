@@ -16,7 +16,8 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - ImageScalerForSDModels: 根据SD模型类型将图像缩放到指定像素数
   - ImageScaleBySpecifiedSide: 根据指定边长缩放图片
   - ComputeImageScaleRatio: 计算图像缩放比例和缩放后的宽高
-
+  - ImageRotate: 旋转图像
+  
 - IPAdapter工具:
   - IPAdapterMSTiled: 对图像进行分块处理并应用IPAdapter
   - IPAdapterMSLayerWeights: 为IPAdapter提供精细的层权重控制
@@ -26,6 +27,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - ColorTint: 应用图片颜色滤镜
   - ColorBlockEffect: 实现图片色块化效果
   - FlatteningEffect: 实现图片平面化效果
+
 
 - 遮罩工具:
   - OutlineMask: 给遮罩添加轮廓线
@@ -39,7 +41,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
 - 人脸分析工具:
   - GeneratePreciseFaceMask: 生成精确的人脸遮罩
   - AlignImageByFace: 根据图像中的人脸进行旋转对齐
-  - ImageRotate: 旋转图像
+ 
 
 ## 安装
 
