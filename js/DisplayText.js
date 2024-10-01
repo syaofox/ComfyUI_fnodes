@@ -8,46 +8,44 @@ app.registerExtension({
             return;
         }
         
-        if (nodeData.name === "DisplayAny-" )  {
-            const onExecuted = nodeType.prototype.onExecuted;
+        switch (nodeData.name) {
+            case "DisplayAny-":
+                const onExecutedDisplayAny = nodeType.prototype.onExecuted;
+                nodeType.prototype.onExecuted = function (message) {
+                    onExecutedDisplayAny?.apply(this, arguments);
+                    updateWidget(this, "displaytext", message["text"].join(""));
+                };
+                break;
 
-            nodeType.prototype.onExecuted = function (message) {
-                onExecuted?.apply(this, arguments);
+            case "ImageScalerForSDModels-":
+            case "GetImageSize-":
+            case "ImageScaleBySpecifiedSide-":
+            case "ComputeImageScaleRatio-":
+                const onExecutedImage = nodeType.prototype.onExecuted;
+                nodeType.prototype.onExecuted = function (message) {
+                    onExecutedImage?.apply(this, arguments);
+                    let value = message["width"].join("") + "x" + message["height"].join("");
+                    if (nodeData.name === "GetImageSize-") {
+                        value += "x" + message["count"].join("");
+                    }
+                    if (nodeData.name === "ComputeImageScaleRatio-") {
+                        value += "x" + message["rescale_ratio"].join("");
+                    }
+                    updateWidget(this, "return_text", value);
+                };
+                break;
+        }
 
-                let textWidget = this.widgets && this.widgets.find(w => w.name === "displaytext");
-                if (!textWidget) {
-                    textWidget = ComfyWidgets["STRING"](this, "displaytext", ["STRING", { multiline: true }], app).widget;
-                    textWidget.inputEl.readOnly = true;
-                    textWidget.inputEl.style.border = "none";
-                    textWidget.inputEl.style.backgroundColor = "transparent";
-                }
-                textWidget.value = message["text"].join("");
-            };
-
-        };
-
-        if (nodeData.name === "ImageScalerForSDModels-" || nodeData.name === "GetImageSize-" || nodeData.name === "ImageScaleBySpecifiedSide-" || nodeData.name === "ComputeImageScaleRatio-") {
-            const onExecuted = nodeType.prototype.onExecuted;
-
-            nodeType.prototype.onExecuted = function (message) {
-                onExecuted?.apply(this, arguments);
-
-                let textWidget = this.widgets && this.widgets.find(w => w.name === "return_text");
-                if (!textWidget) {
-                    textWidget = ComfyWidgets["STRING"](this, "return_text", ["STRING", { multiline: true }], app).widget;
-                    textWidget.inputEl.readOnly = true;
-                    textWidget.inputEl.style.border = "none";
-                    textWidget.inputEl.style.backgroundColor = "transparent";
-                }
-                textWidget.value = message["width"].join("") + "x" + message["height"].join("");
-                if (nodeData.name === "GetImageSize-") {
-                    textWidget.value += "x" + message["count"].join("");
-                }
-                if (nodeData.name === "ComputeImageScaleRatio-") {
-                    textWidget.value += "x" + message["rescale_ratio"].join("");
-                }
-            };
-
+        // 辅助函数用于更新或创建widget
+        function updateWidget(node, widgetName, value) {
+            let textWidget = node.widgets && node.widgets.find(w => w.name === widgetName);
+            if (!textWidget) {
+                textWidget = ComfyWidgets["STRING"](node, widgetName, ["STRING", { multiline: true }], app).widget;
+                textWidget.inputEl.readOnly = true;
+                textWidget.inputEl.style.border = "none";
+                textWidget.inputEl.style.backgroundColor = "transparent";
+            }
+            textWidget.value = value;
         }
                 
     },
