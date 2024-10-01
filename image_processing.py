@@ -5,6 +5,8 @@ from PIL import Image, ImageEnhance
 
 from comfy_extras.nodes_post_processing import Blend, Blur, Quantize
 
+from .utils.image_convert import image_posterize
+
 _CATEGORY = 'fnodes/image processing'
 
 
@@ -196,7 +198,7 @@ class ColorBlockEffect:
     DESCRIPTION = '图片色块化'
 
     def execute(self, image: torch.Tensor, strength: int):
-        color_correct = ColorAdjustment()
+        color_adjustment = ColorAdjustment()
         blur = Blur()
         quantize_node = Quantize()
         blender = Blend()
@@ -207,13 +209,62 @@ class ColorBlockEffect:
         quantized_image = quantize_node.quantize(blurred_image, colors=5, dither='bayer-2')
         quantized_image = torch.cat(quantized_image, dim=1)
 
-        color_corrected_image = color_correct.execute(quantized_image, temperature=0, hue=0, brightness=5, contrast=0, saturation=-100, gamma=1)
-        color_corrected_image = torch.cat(color_corrected_image, dim=1)
+        color_adjusted_image = color_adjustment.execute(quantized_image, temperature=0, hue=0, brightness=5, contrast=0, saturation=-100, gamma=1)
+        color_adjusted_image = torch.cat(color_adjusted_image, dim=1)
 
-        blender_image = blender.blend_images(color_corrected_image, image, blend_factor=1, blend_mode='overlay')
+        blender_image = blender.blend_images(color_adjusted_image, image, blend_factor=1, blend_mode='overlay')
         blender_image = torch.cat(blender_image, dim=1)
 
-        flat_image = color_correct.execute(blender_image, temperature=0, hue=0, brightness=5, contrast=5, saturation=50, gamma=1.2)
+        flat_image = color_adjustment.execute(blender_image, temperature=0, hue=0, brightness=5, contrast=5, saturation=50, gamma=1.2)
+        flat_image = torch.cat(flat_image, dim=1)
+        return (flat_image,)
+
+
+class FlatteningEffect:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'image': ('IMAGE',),
+                'high_threshold': (
+                    'FLOAT',
+                    {'default': 0.7, 'min': 0.01, 'max': 10.0, 'step': 0.01},
+                ),
+                'mid_threshold': (
+                    'FLOAT',
+                    {'default': 0.35, 'min': 0.01, 'max': 10.0, 'step': 0.01},
+                ),
+                'low_threshold': (
+                    'FLOAT',
+                    {'default': 0.1, 'min': 0.01, 'max': 10.0, 'step': 0.01},
+                ),
+            },
+        }
+
+    RETURN_TYPES = ('IMAGE',)
+    FUNCTION = 'execute'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '图片平面化'
+
+    def execute(self, image: torch.Tensor, high_threshold: float, mid_threshold: float, low_threshold: float):
+        color_adjustment = ColorAdjustment()
+        blender = Blend()
+
+        color_adjusted_image = color_adjustment.execute(image, temperature=0, hue=0, brightness=-5, contrast=10, saturation=65, gamma=1.3)
+        color_adjusted_image = torch.cat(color_adjusted_image, dim=1)
+
+        posterized_image1 = image_posterize(color_adjusted_image, threshold=high_threshold)
+        posterized_image2 = image_posterize(color_adjusted_image, threshold=mid_threshold)
+        posterized_image3 = image_posterize(color_adjusted_image, threshold=low_threshold)
+
+        blender_image1 = blender.blend_images(posterized_image1, posterized_image2, blend_factor=0.5, blend_mode='screen')
+        blender_image1 = torch.cat(blender_image1, dim=1)
+        blender_image2 = blender.blend_images(blender_image1, posterized_image3, blend_factor=0.5, blend_mode='screen')
+        blender_image2 = torch.cat(blender_image2, dim=1)
+
+        flat_image = blender.blend_images(blender_image2, color_adjusted_image, blend_factor=1, blend_mode='soft_light')
+        flat_image = torch.cat(flat_image, dim=1)
+        flat_image = color_adjustment.execute(flat_image, temperature=0, hue=0, brightness=-20, contrast=45, saturation=25, gamma=1.0)
         flat_image = torch.cat(flat_image, dim=1)
         return (flat_image,)
 
@@ -222,10 +273,12 @@ IMAGE_PROCESSING_CLASS_MAPPINGS = {
     'ColorAdjustment-': ColorAdjustment,
     'ColorTint-': ColorTint,
     'ColorBlockEffect-': ColorBlockEffect,
+    'FlatteningEffect-': FlatteningEffect,
 }
 
 IMAGE_PROCESSING_NAME_MAPPINGS = {
     'ColorAdjustment-': 'Image Color Adjustment',
     'ColorTint-': 'Image Color Tint',
     'ColorBlockEffect-': 'Image Color Block Effect',
+    'FlatteningEffect-': 'Image Flattening Effect',
 }

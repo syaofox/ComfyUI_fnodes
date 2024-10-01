@@ -57,3 +57,11 @@ def tensor2np(image):
 
 def np2tensor(image):
     return T.ToTensor()(image).permute(1, 2, 0)
+
+
+def image_posterize(image, threshold):
+    image = image.mean(dim=3, keepdim=True)
+    image = (image > threshold).float()
+    image = image.repeat(1, 1, 1, 3)
+
+    return image
