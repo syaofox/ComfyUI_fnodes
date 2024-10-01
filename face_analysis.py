@@ -1,7 +1,5 @@
 # from custom_nodes.ComfyUI_FaceAnalysis.dlib import dlib
 
-
-import os
 from pathlib import Path
 
 import cv2
@@ -9,13 +7,13 @@ import numpy as np
 import onnxruntime
 import torch
 import torchvision.transforms.v2 as T
+from PIL import Image
 
 import folder_paths
-from comfy.utils import ProgressBar, common_upscale
-from folder_paths import models_dir
+from comfy.utils import ProgressBar
 
 from .utils.downloader import download_model
-from .utils.image_convert import np2tensor, tensor2np
+from .utils.image_convert import np2tensor, pil2mask, pil2tensor, tensor2np, tensor2pil
 from .utils.mask_utils import blur_mask, expand_mask, fill_holes, invert_mask
 
 _CATEGORY = 'fnodes/face_analysis'
@@ -138,10 +136,90 @@ class GeneratePreciseFaceMask:
         return mask.squeeze(0).unsqueeze(-1)
 
 
+class AlignImageByFace:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'analysis_models': ('ANALYSIS_MODELS',),
+                'image_from': ('IMAGE',),
+                'expand': ('BOOLEAN', {'default': True}),
+                'simple_angle': ('BOOLEAN', {'default': False}),
+            },
+            'optional': {
+                'image_to': ('IMAGE',),
+            },
+        }
+
+    RETURN_TYPES = ('IMAGE', 'MASK', 'MASK', 'FLOAT', 'FLOAT')
+    RETURN_NAMES = ('aligned_image', 'mask', 'inverted_mask', 'rotation_angle', 'inverse_rotation_angle')
+    FUNCTION = 'align'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '根据图像中的人脸进行旋转对齐'
+
+    def align(self, analysis_models, image_from, expand=True, simple_angle=False, image_to=None):
+        source_image = tensor2np(image_from[0])
+
+        def find_nearest_angle(angle):
+            angles = [-360, -270, -180, -90, 0, 90, 180, 270, 360]
+            normalized_angle = angle % 360
+            return min(angles, key=lambda x: min(abs(x - normalized_angle), abs(x - normalized_angle - 360), abs(x - normalized_angle + 360)))
+
+        def calculate_angle(shape):
+            left_eye, right_eye = shape[:2]
+            return float(np.degrees(np.arctan2(left_eye[1] - right_eye[1], left_eye[0] - right_eye[0])))
+
+        def detect_face(img, flip=False):
+            if flip:
+                img = Image.fromarray(img).rotate(180, expand=expand, resample=Image.Resampling.BICUBIC)
+                img = np.array(img)
+            face_shape = analysis_models.get_keypoints(img)
+            return face_shape, img
+
+        # 尝试检测人脸，如果失败则翻转图像再次尝试
+        face_shape, processed_image = detect_face(source_image)
+        if face_shape is None:
+            face_shape, processed_image = detect_face(source_image, flip=True)
+            is_flipped = True
+            if face_shape is None:
+                raise Exception('无法在图像中检测到人脸。')
+        else:
+            is_flipped = False
+
+        rotation_angle = calculate_angle(face_shape)
+        if simple_angle:
+            rotation_angle = find_nearest_angle(rotation_angle)
+
+        # 如果提供了目标图像，计算相对旋转角度
+        if image_to is not None:
+            target_shape = analysis_models.get_keypoints(tensor2np(image_to[0]))
+            if target_shape is not None:
+                print(f'目标图像人脸关键点: {target_shape}')
+                rotation_angle -= calculate_angle(target_shape)
+
+        original_image = tensor2pil(image_from[0]) if not is_flipped else Image.fromarray(processed_image)
+
+        # 创建并旋转遮罩
+        mask = Image.new('L', original_image.size, 255)
+        rotated_mask = mask.rotate(rotation_angle, expand=expand, resample=Image.Resampling.BICUBIC)
+        mask_tensor = pil2mask(rotated_mask)
+
+        # 旋转原始图像
+        aligned_image = original_image.rotate(rotation_angle, expand=expand, resample=Image.Resampling.BICUBIC)
+        aligned_image_tensor = pil2tensor(aligned_image)
+
+        if is_flipped:
+            rotation_angle += 180
+
+        return (aligned_image_tensor, mask_tensor, 1.0 - mask_tensor, rotation_angle, 360 - rotation_angle)
+
+
 FACE_ANALYSIS_CLASS_MAPPINGS = {
     'GeneratePreciseFaceMask-': GeneratePreciseFaceMask,
+    'AlignImageByFace-': AlignImageByFace,
 }
 
 FACE_ANALYSIS_NAME_MAPPINGS = {
     'GeneratePreciseFaceMask-': 'Generate PreciseFaceMask',
+    'AlignImageByFace-': 'Align Image By Face',
 }

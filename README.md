@@ -38,6 +38,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
 
 - 人脸分析工具:
   - GeneratePreciseFaceMask: 生成精确的人脸遮罩
+  - AlignImageByFace: 根据图像中的人脸进行旋转对齐
 
 ## 安装
 
