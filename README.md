@@ -54,8 +54,12 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
 
 ## 安装
 
-1. 确保您已经安装了ComfyUI。
-2. 克隆此仓库到ComfyUI的`custom_nodes`目录:
+1. 确保您已经安装了ComfyUI,部分功能需要安装其他自定义节点
+    - ComfyUI_IPAdapter_plus: https://github.com/cubiq/ComfyUI_IPAdapter_plus
+    - ComfyUI_essentials: https://github.com/cubiq/ComfyUI_essentials
+    - ComfyUI_FaceAnalysis: https://github.com/cubiq/ComfyUI_FaceAnalysis
+
+3. 克隆此仓库到ComfyUI的`custom_nodes`目录:
    ```bash
    cd ComfyUI/custom_nodes
    git clone https://github.com/your-username/ComfyUI_fnodes.git
