@@ -40,7 +40,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - AlignImageByFace: 根据图像中的人脸进行旋转对齐 [详细说明](docs/face_analysis.md#alignimagebyface)
   - FaceCutout: 切下人脸并进行缩放 [详细说明](docs/face_analysis.md#facecutout)
   - FacePaste: 将人脸图像贴回原图 [详细说明](docs/face_analysis.md#facepaste)
-
+  - ExtractBoundingBox: 从边界框信息中提取坐标和尺寸 [详细说明](docs/face_analysis.md#extractboundingbox)
 - 采样器工具:
   - ScheduleSamplerCustomTurbo: 自定义涡轮采样器,支持多次降噪 [详细说明](docs/schedule_samplers.md#schedulesamplercustomturbo)
   - ScheduleSamplerCustomAYS: 自定义AYS采样器,支持多次降噪和不同模型类型 [详细说明](docs/schedule_samplers.md#schedulesamplercustomays)

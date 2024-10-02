@@ -350,11 +350,31 @@ class FacePaste:
         return pil2tensor(destination), pil2mask(mask)
 
 
+class ExtractBoundingBox:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'bounding_info': ('BOUNDINGINFO',),
+            },
+        }
+
+    RETURN_TYPES = ('INT', 'INT', 'INT', 'INT')
+    RETURN_NAMES = ('x', 'y', 'width', 'height')
+    FUNCTION = 'extract'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '从边界框信息中提取坐标和尺寸'
+
+    def extract(self, bounding_info):
+        return (bounding_info['x'], bounding_info['y'], bounding_info['width'], bounding_info['height'])
+
+
 FACE_ANALYSIS_CLASS_MAPPINGS = {
     'GeneratePreciseFaceMask-': GeneratePreciseFaceMask,
     'AlignImageByFace-': AlignImageByFace,
     'FaceCutout-': FaceCutout,
     'FacePaste-': FacePaste,
+    'ExtractBoundingBox-': ExtractBoundingBox,
 }
 
 FACE_ANALYSIS_NAME_MAPPINGS = {
@@ -362,4 +382,5 @@ FACE_ANALYSIS_NAME_MAPPINGS = {
     'AlignImageByFace-': 'Align Image By Face',
     'FaceCutout-': 'Face Cutout',
     'FacePaste-': 'Face Paste',
+    'ExtractBoundingBox-': 'Extract Bounding Box',
 }
