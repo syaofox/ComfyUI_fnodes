@@ -9,6 +9,6 @@ Repository = "https://github.com/syaofox/ComfyUI_fnodes"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "syaofox"
 DisplayName = "ComfyUI_fnodes"
 Icon = ""
