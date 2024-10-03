@@ -92,7 +92,7 @@ class ScheduleSamplerCustomTurbo:
                 'steps': ('INT', {'default': 4, 'min': 1, 'max': 10}),
                 'denoise_schedule': ('STRING', {'default': '0.5,0.25'}),
                 'latent_image': ('LATENT',),
-            }
+            },
         }
 
     RETURN_TYPES = ('LATENT', 'LATENT')
@@ -105,6 +105,8 @@ class ScheduleSamplerCustomTurbo:
     def sample(self, model, add_noise, noise_seed, cfg, positive, negative, sampler_name, steps, denoise_schedule, latent_image):
         denoise_values = [float(x.strip()) for x in denoise_schedule.split(',')]
 
+        mask = latent_image.get('noise_mask', None)
+
         for i, denoise in enumerate(denoise_values):
             current_noise_seed = noise_seed + i
             start_step = 10 - int(10 * denoise)
@@ -112,6 +114,7 @@ class ScheduleSamplerCustomTurbo:
             sigmas = model.get_model_object('model_sampling').sigma(timesteps)
             sigmas = torch.cat([sigmas, sigmas.new_zeros([1])])
 
+            latent_image['noise_mask'] = mask
             latent_image, out_denoised = common_sampling_logic(model, add_noise, current_noise_seed, cfg, positive, negative, sampler_name, steps, latent_image, sigmas)
 
         return latent_image, out_denoised
@@ -171,6 +174,7 @@ class ScheduleSamplerCustomAYS:
 
     def sample(self, model, add_noise, noise_seed, cfg, positive, negative, sampler_name, model_type, steps, denoise_schedule, latent_image):
         denoise_values = [float(x.strip()) for x in denoise_schedule.split(',')]
+        mask = latent_image.get('noise_mask', None)
 
         for i, denoise in enumerate(denoise_values):
             current_noise_seed = noise_seed + i
@@ -189,6 +193,7 @@ class ScheduleSamplerCustomAYS:
             sigmas[-1] = 0
             sigmas = torch.FloatTensor(sigmas)
 
+            latent_image['noise_mask'] = mask
             latent_image, out_denoised = common_sampling_logic(model, add_noise, current_noise_seed, cfg, positive, negative, sampler_name, total_steps, latent_image, sigmas)
 
         return latent_image, out_denoised
@@ -230,10 +235,13 @@ class ScheduleSampler:
 
     def sample(self, model, seed, steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise_schedule):
         denoise_values = [float(x.strip()) for x in denoise_schedule.split(',')]
+
+        mask = latent_image.get('noise_mask', None)
         for i, denoise in enumerate(denoise_values):
             current_noise_seed = seed + i
             current_steps = round(steps * denoise)
 
+            latent_image['noise_mask'] = mask
             latent_image = common_ksampler(model, current_noise_seed, current_steps, cfg, sampler_name, scheduler, positive, negative, latent_image, denoise=denoise)
             latent_image = latent_image[0]
 
