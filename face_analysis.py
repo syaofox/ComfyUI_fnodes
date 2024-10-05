@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageFilter
 import folder_paths
 from comfy.utils import ProgressBar, common_upscale
 
+from .Face_morph import FaceMorph
 from .utils.downloader import download_model
 from .utils.image_convert import np2tensor, pil2mask, pil2tensor, tensor2mask, tensor2np, tensor2pil
 from .utils.mask_utils import blur_mask, expand_mask, fill_holes, invert_mask
@@ -369,12 +370,14 @@ class ExtractBoundingBox:
         return (bounding_info['x'], bounding_info['y'], bounding_info['width'], bounding_info['height'])
 
 
+# 更新类映射
 FACE_ANALYSIS_CLASS_MAPPINGS = {
     'GeneratePreciseFaceMask-': GeneratePreciseFaceMask,
     'AlignImageByFace-': AlignImageByFace,
     'FaceCutout-': FaceCutout,
     'FacePaste-': FacePaste,
     'ExtractBoundingBox-': ExtractBoundingBox,
+    'FaceMorph-': FaceMorph,
 }
 
 FACE_ANALYSIS_NAME_MAPPINGS = {
@@ -383,4 +386,5 @@ FACE_ANALYSIS_NAME_MAPPINGS = {
     'FaceCutout-': 'Face Cutout',
     'FacePaste-': 'Face Paste',
     'ExtractBoundingBox-': 'Extract Bounding Box',
+    'FaceMorph-': 'Face Morph',
 }

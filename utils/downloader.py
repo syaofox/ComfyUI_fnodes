@@ -10,8 +10,7 @@ def download_model(model_url, save_loc, model_name):
     save_loc.mkdir(parents=True, exist_ok=True)
 
     if not (save_loc / model_name).is_file():
-        print('fnodes: 模型不存在')
-        print('fnodes: 正在下载模型')
+        print(f'fnodes: 正在下载模型{model_name}')
         response = requests.get(model_url, stream=True)
         try:
             if response.status_code == 200:
@@ -31,10 +30,12 @@ def download_model(model_url, save_loc, model_name):
                     for data in response.iter_content(block_size):
                         bar.update(len(data))
                         file.write(data)
-                print('fnodes: 模型下载完成')
+                print(f'fnodes: 模型{model_name}下载完成')
+            else:
+                print(f'fnodes: 模型{model_name}下载失败: {response.status_code}')
 
         except requests.exceptions.RequestException as err:
-            print(f'fnodes: 模型下载失败: {err}')
+            print(f'fnodes: 模型{model_name}下载失败: {err}')
             print(f'fnodes: 请从以下链接手动下载: {model_url}')
             print(f'fnodes: 并将其放置在 {save_loc}')
             return False
