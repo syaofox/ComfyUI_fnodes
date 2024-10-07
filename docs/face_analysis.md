@@ -74,4 +74,16 @@
 - `width`: 边界框的宽度
 - `height`: 边界框的高度
 
-            
+## FaceMorph
+将人脸图像进行变形。
+
+### 输入
+- `source_image`: 源人脸图像
+- `target_image`: 目标人脸图像
+- `landmark_type`: 关键点类型 ('ALL', 'OUTLINE')
+- `align_type`: 对齐类型 ('Width', 'Height', 'Landmarks', 'JawLine')
+- `onnx_device`: 设备类型 ('CPU', 'CUDA', 'ROCM', 'CoreML', 'torch_gpu')
+
+### 输出
+- `warped_image`: 变形后的图像
+
