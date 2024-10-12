@@ -1,6 +1,8 @@
 import math
 
 import cv2
+import numpy as np
+import torch
 from PIL import Image
 
 from comfy.utils import common_upscale
@@ -289,6 +291,55 @@ class TrimImageBorders:
         return (cropped_image,)
 
 
+class AddImageBorder:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'image': ('IMAGE',),
+                'border_width': ('INT', {'default': 10, 'min': 0, 'max': 1000, 'step': 1}),
+                'border_ratio': ('FLOAT', {'default': 0.0, 'min': 0.0, 'max': 1.0, 'step': 0.01}),
+                'r': ('INT', {'default': 0, 'min': 0, 'max': 255, 'step': 1}),
+                'g': ('INT', {'default': 0, 'min': 0, 'max': 255, 'step': 1}),
+                'b': ('INT', {'default': 0, 'min': 0, 'max': 255, 'step': 1}),
+            }
+        }
+
+    RETURN_TYPES = ('IMAGE', 'MASK')
+    RETURN_NAMES = ('bordered_image', 'border_mask')
+    FUNCTION = 'add_border'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '给图片增加指定RGB颜色的边框,可以通过绝对像素值或相对比率设置边框宽度,并输出边框部分的mask'
+
+    def add_border(self, image, border_width, border_ratio, r, g, b):
+        # 将输入图像从 PyTorch 张量转换为 NumPy 数组
+        img_np = tensor2np(image[0])
+
+        # 获取原始图像的尺寸
+        h, w, c = img_np.shape
+
+        # 计算边框宽度
+        ratio_width = int(min(h, w) * border_ratio)
+        final_border_width = max(border_width, ratio_width)
+
+        # 创建新的带边框的图像
+        new_h, new_w = h + 2 * final_border_width, w + 2 * final_border_width
+        bordered_img = np.full((new_h, new_w, c), [b, g, r], dtype=np.uint8)
+
+        # 将原始图像放置在边框中央
+        bordered_img[final_border_width : final_border_width + h, final_border_width : final_border_width + w] = img_np
+
+        # 创建边框mask
+        border_mask = np.ones((new_h, new_w), dtype=np.float32)
+        border_mask[final_border_width : final_border_width + h, final_border_width : final_border_width + w] = 0
+
+        # 将结果转换回 PyTorch 张量
+        bordered_tensor = np2tensor(bordered_img).unsqueeze(0)
+        mask_tensor = torch.from_numpy(border_mask).unsqueeze(0)
+
+        return (bordered_tensor, mask_tensor)
+
+
 IMAGE_SCALE_CLASS_MAPPINGS = {
     'GetImageSize-': GetImageSize,
     'ImageScalerForSDModels-': ImageScalerForSDModels,
@@ -296,6 +347,7 @@ IMAGE_SCALE_CLASS_MAPPINGS = {
     'ComputeImageScaleRatio-': ComputeImageScaleRatio,
     'ImageRotate-': ImageRotate,
     'TrimImageBorders-': TrimImageBorders,
+    'AddImageBorder-': AddImageBorder,
 }
 
 IMAGE_SCALE_NAME_MAPPINGS = {
@@ -305,4 +357,5 @@ IMAGE_SCALE_NAME_MAPPINGS = {
     'ComputeImageScaleRatio-': 'Compute Image Scale Ratio',
     'ImageRotate-': 'Image Rotate',
     'TrimImageBorders-': 'Trim Image Borders',
+    'AddImageBorder-': 'Add Image Border',
 }

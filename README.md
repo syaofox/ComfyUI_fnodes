@@ -18,6 +18,7 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - ComputeImageScaleRatio: 计算图像缩放比例和缩放后的宽高 [详细说明](docs/image_scaling.md#computeimagescaleratio)
   - ImageRotate: 旋转图像 [详细说明](docs/image_scaling.md#imagerotate)
   - TrimImageBorders: 去除图片黑边 [详细说明](docs/image_scaling.md#trimimageborders)
+  - AddImageBorder: 给图片增加指定RGB颜色的边框 [详细说明](docs/image_scaling.md#addimageborder)
   
 - IPAdapter工具:
   - IPAdapterMSTiled: 对图像进行分块处理并应用IPAdapter [详细说明](docs/ipadapter.md#ipadaptermstiledl)

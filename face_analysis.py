@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFilter
 import folder_paths
 from comfy.utils import ProgressBar, common_upscale
 
-from .Face_morph import FaceMorph
+from .face_morph import FaceMorph
 from .utils.downloader import download_model
 from .utils.image_convert import np2tensor, pil2mask, pil2tensor, tensor2mask, tensor2np, tensor2pil
 from .utils.mask_utils import blur_mask, expand_mask, fill_holes, invert_mask
