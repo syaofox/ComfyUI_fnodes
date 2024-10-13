@@ -35,6 +35,8 @@ ComfyUI_fnodes是一个为ComfyUI设计的自定义节点集合。这些节点�
   - CreateBlurredEdgeMask: 根据指定图片创建模糊遮罩 [详细说明](docs/mask_tools.md#createblurrededgemask)
   - MaskChange: 修改和处理遮罩,支持扩展、填充和模糊等操作 [详细说明](docs/mask_tools.md#maskchange)
   - Depth2Mask: 将深度图像转换为遮罩 [详细说明](docs/mask_tools.md#depth2mask)
+  - MaskScaleBy: 根据指定比例缩放遮罩 [详细说明](docs/mask_tools.md#maskscaleby)
+  - MaskScale: 根据指定宽高缩放遮罩 [详细说明](docs/mask_tools.md#maskscale)
 
 - 人脸分析工具:
   - GeneratePreciseFaceMask: 生成精确的人脸遮罩 [详细说明](docs/face_analysis.md#generateprecisefacemask)

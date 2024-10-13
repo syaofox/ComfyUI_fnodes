@@ -3,7 +3,7 @@ from PIL import Image, ImageFilter, ImageOps
 
 from comfy.utils import common_upscale
 
-from .utils.image_convert import np2tensor, tensor2mask
+from .utils.image_convert import mask2tensor, np2tensor, tensor2mask
 from .utils.mask_utils import blur_mask, combine_mask, expand_mask, fill_holes, grow_mask, invert_mask
 
 _CATEGORY = 'fnodes/masks'
@@ -181,11 +181,71 @@ class Depth2Mask:
         return mask1, 1.0 - mask1
 
 
+class MaskScaleBy:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'mask': ('MASK',),
+                'scale_by': ('FLOAT', {'default': 1.0, 'min': 0.01, 'max': 8.0, 'step': 0.01}),
+            }
+        }
+
+    RETURN_TYPES = ('MASK',)
+    FUNCTION = 'upscale'
+
+    CATEGORY = _CATEGORY
+
+    def upscale(self, mask, scale_by):
+        image = mask2tensor(mask)
+        samples = image.movedim(-1, 1)
+        width = round(samples.shape[3] * scale_by)
+        height = round(samples.shape[2] * scale_by)
+        s = common_upscale(samples, width, height, 'lanczos', 'disabled')
+        s = s.movedim(1, -1)
+        return (tensor2mask(s),)
+
+
+class MaskScale:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            'required': {
+                'mask': ('MASK',),
+                'width': ('INT', {'default': 512, 'min': 0, 'max': 16384, 'step': 1}),
+                'height': ('INT', {'default': 512, 'min': 0, 'max': 16384, 'step': 1}),
+            }
+        }
+
+    RETURN_TYPES = ('MASK',)
+    FUNCTION = 'upscale'
+
+    CATEGORY = _CATEGORY
+
+    def upscale(self, mask, width, height):
+        image = mask2tensor(mask)
+        if width == 0 and height == 0:
+            s = image
+        else:
+            samples = image.movedim(-1, 1)
+
+            if width == 0:
+                width = max(1, round(samples.shape[3] * height / samples.shape[2]))
+            elif height == 0:
+                height = max(1, round(samples.shape[2] * width / samples.shape[3]))
+
+            s = common_upscale(samples, width, height, 'lanczos', 'disabled')
+            s = s.movedim(1, -1)
+        return (tensor2mask(s),)
+
+
 MASK_CLASS_MAPPINGS = {
     'OutlineMask-': OutlineMask,
     'CreateBlurredEdgeMask-': CreateBlurredEdgeMask,
     'MaskChange-': MaskChange,
     'Depth2Mask-': Depth2Mask,
+    'MaskScaleBy-': MaskScaleBy,
+    'MaskScale-': MaskScale,
 }
 
 MASK_NAME_MAPPINGS = {
@@ -193,4 +253,6 @@ MASK_NAME_MAPPINGS = {
     'CreateBlurredEdgeMask-': 'Create Blurred Edge Mask',
     'MaskChange-': 'Mask Change',
     'Depth2Mask-': 'Depth to Mask',
+    'MaskScaleBy-': 'Mask Scale By',
+    'MaskScale-': 'Mask Scale',
 }
