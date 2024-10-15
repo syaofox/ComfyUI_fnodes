@@ -29,15 +29,38 @@ class Occluder:
             providers=['CPUExecutionProvider'],
         )
 
-    def create_occlusion_mask(self, crop_vision_frame):
+    def create_occlusion_mask(self, crop_vision_frame, threshold=0.5):
         prepare_vision_frame = cv2.resize(crop_vision_frame, self.face_occluder.get_inputs()[0].shape[1:3][::-1])
         prepare_vision_frame = np.expand_dims(prepare_vision_frame, axis=0).astype(np.float32) / 255
         prepare_vision_frame = prepare_vision_frame.transpose(0, 1, 2, 3)
         occlusion_mask = self.face_occluder.run(None, {self.face_occluder.get_inputs()[0].name: prepare_vision_frame})[0][0]
         occlusion_mask = occlusion_mask.transpose(0, 1, 2).clip(0, 1).astype(np.float32)
         occlusion_mask = cv2.resize(occlusion_mask, crop_vision_frame.shape[:2][::-1])
+        occlusion_mask = (occlusion_mask > threshold).astype(np.float32)  # 应用阈值
         occlusion_mask = (cv2.GaussianBlur(occlusion_mask.clip(0, 1), (0, 0), 5).clip(0.5, 1) - 0.5) * 2
         return occlusion_mask
+
+
+class OccluderLoader:
+    def __init__(self):
+        model_url = 'https://github.com/facefusion/facefusion-assets/releases/download/models-3.0.0/dfl_xseg.onnx'
+        save_loc = Path(folder_paths.models_dir) / 'fnodes' / 'occluder'
+        model_name = 'occluder.onnx'
+        download_model(model_url, save_loc, model_name)
+        self.occluder_model = Occluder(str(save_loc / model_name))
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {}
+
+    RETURN_TYPES = ('OCCLUDER',)
+    RETURN_NAMES = ('occluder',)
+    FUNCTION = 'get_occluder'
+    CATEGORY = _CATEGORY
+    DESCRIPTION = '加载人脸遮挡模型'
+
+    def get_occluder(self):
+        return (self.occluder_model,)
 
 
 class GeneratePreciseFaceMask:
@@ -45,7 +68,9 @@ class GeneratePreciseFaceMask:
     def INPUT_TYPES(cls):
         return {
             'required': {
+                'occluder': ('OCCLUDER',),
                 'input_image': ('IMAGE',),
+                'mask_threshold': ('FLOAT', {'default': 0.1, 'min': 0.0, 'max': 1.0, 'step': 0.01}),
             },
             'optional': {
                 'grow': ('INT', {'default': 0, 'min': -4096, 'max': 4096, 'step': 1}),
@@ -73,16 +98,8 @@ class GeneratePreciseFaceMask:
     CATEGORY = _CATEGORY
     DESCRIPTION = '生成精确人脸遮罩'
 
-    def _load_occluder_model(self):
-        """加载人脸遮挡模型"""
-        model_url = 'https://github.com/facefusion/facefusion-assets/releases/download/models-3.0.0/dfl_xseg.onnx'
-        save_loc = Path(folder_paths.models_dir) / 'fnodes' / 'occluder'
-        model_name = 'occluder.onnx'
-        download_model(model_url, save_loc, model_name)
-        return Occluder(str(save_loc / model_name))
-
-    def generate_mask(self, input_image, grow, grow_percent, grow_tapered, blur, fill):
-        face_occluder_model = self._load_occluder_model()
+    def generate_mask(self, occluder, input_image, mask_threshold, grow, grow_percent, grow_tapered, blur, fill):
+        face_occluder_model = occluder
 
         out_mask, out_inverted_mask, out_image = [], [], []
 
@@ -91,7 +108,7 @@ class GeneratePreciseFaceMask:
             pbar = ProgressBar(steps)
 
         for i in range(steps):
-            mask, processed_img = self._process_single_image(input_image[i], face_occluder_model, grow, grow_percent, grow_tapered, blur, fill)
+            mask, processed_img = self._process_single_image(input_image[i], face_occluder_model, mask_threshold, grow, grow_percent, grow_tapered, blur, fill)
             out_mask.append(mask)
             out_inverted_mask.append(invert_mask(mask))
             out_image.append(processed_img)
@@ -100,7 +117,7 @@ class GeneratePreciseFaceMask:
 
         return torch.stack(out_mask).squeeze(-1), torch.stack(out_inverted_mask).squeeze(-1), torch.stack(out_image)
 
-    def _process_single_image(self, img, face_occluder_model, grow, grow_percent, grow_tapered, blur, fill):
+    def _process_single_image(self, img, face_occluder_model, mask_threshold, grow, grow_percent, grow_tapered, blur, fill):
         """处理单张图像"""
         face = tensor2np(img)
         if face is None:
@@ -108,7 +125,7 @@ class GeneratePreciseFaceMask:
             return torch.zeros_like(img)[:, :, :1], torch.zeros_like(img)
 
         cv2_image = cv2.cvtColor(np.array(face), cv2.COLOR_RGB2BGR)
-        occlusion_mask = face_occluder_model.create_occlusion_mask(cv2_image)
+        occlusion_mask = face_occluder_model.create_occlusion_mask(cv2_image, mask_threshold)
 
         if occlusion_mask is None:
             print('\033[96mNo landmarks detected\033[0m')
@@ -372,6 +389,7 @@ class ExtractBoundingBox:
 
 # 更新类映射
 FACE_ANALYSIS_CLASS_MAPPINGS = {
+    'OccluderLoader-': OccluderLoader,
     'GeneratePreciseFaceMask-': GeneratePreciseFaceMask,
     'AlignImageByFace-': AlignImageByFace,
     'FaceCutout-': FaceCutout,
@@ -381,6 +399,7 @@ FACE_ANALYSIS_CLASS_MAPPINGS = {
 }
 
 FACE_ANALYSIS_NAME_MAPPINGS = {
+    'OccluderLoader-': 'Occluder Loader',
     'GeneratePreciseFaceMask-': 'Generate PreciseFaceMask',
     'AlignImageByFace-': 'Align Image By Face',
     'FaceCutout-': 'Face Cutout',
